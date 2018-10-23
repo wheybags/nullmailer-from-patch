@@ -1,4 +1,5 @@
 #!/bin/bash
+# NULLMAILER FORCE FROM SCRIPT
 
 # v1.0
 # This script changes value of "-f" (<From>) argument of sendmail command when using nullmailer.
