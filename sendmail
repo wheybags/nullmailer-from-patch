@@ -10,14 +10,14 @@ stdin=$(</dev/stdin)
 optIndex="0"
 
 # These vars are responsible for new <From> values.
-# New value for "-f" argument.
-newFrom="somebody"
-# New value for email "From" and "To" fields.
-newAddress="somebody@example.com"
+# New value for "-f" argument, and From header
+newFrom="from_address@example.com"
+# New value for email and "To" field.
+newAddress="to_address@example.com"
 
 # Regexes for changing email "From" and "To" fields.
 fromRE="From:(.*)<.*>"
-fromChangeRE="From:\1<$newAddress>"
+fromChangeRE="From:\1<$newFrom>"
 toRE="To:.*"
 toChangeRE="To: $newAddress"
 
@@ -58,9 +58,14 @@ else
     set -- "${new_args[@]}"
 fi
 
-# Change both "From" and "To" fields to $newAddress in message body (some mail servers need this).
-# Comment "sed" commands if you don't need such behaviour.
+# Change both "From" and "To" fields in message body.
 newMessage=$(echo "$stdin" | sed -E "0,/$fromRE/s//$fromChangeRE/" | sed -E "0,/$toRE/s//$toChangeRE/")
 
 # Call original sendmail with new parameters and message.
 echo "$newMessage" | /usr/sbin/sendmail-bin $@
+
+# echo for testing
+#echo /usr/sbin/sendmail-bin $@
+#echo
+#echo "$newMessage"
+
