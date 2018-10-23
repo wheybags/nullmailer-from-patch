@@ -1,72 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env python3
 # NULLMAILER FORCE FROM SCRIPT
 
-# v1.0
-# This script changes value of "-f" (<From>) argument of sendmail command when using nullmailer.
-# If abscent, "-f" argument with value will be added to command line parameters.
-# Script also changes "From" and "To" fields in email message (may be optional, see line 63).
-# Tested with nullmailer v1.13-r5 on Gentoo Linux.
+import sys
+import subprocess
+from email.message import EmailMessage
 
-stdin=$(</dev/stdin)
-optIndex="0"
+new_from = "FROM_REPLACE"
+new_to = "TO_REPLACE"
 
-# These vars are responsible for new <From> values.
-# New value for "-f" argument, and From header
-newFrom="from_address@example.com"
-# New value for email and "To" field.
-newAddress="to_address@example.com"
+input_str = sys.stdin.read()
 
-# Regexes for changing email "From" and "To" fields.
-fromRE="From:(.*)<.*>"
-fromChangeRE="From:\1<$newFrom>"
-toRE="To:.*"
-toChangeRE="To: $newAddress"
+subject = "sys mail"
+for line in input_str.splitlines():
+    if line.startswith('Subject:'):
+        subject = line[len('Subject:'):]
 
-# Find (if present) the "-f" argument and store its value index.
-# First ":" turns off verbose error reporting.
-while getopts ":f:" flag; do
-    case $flag in
-        f) optIndex=$OPTIND
-           break
-           ;;
-    esac
-done
+msg = EmailMessage()
+msg.set_content(input_str)
+msg["Subject"] = subject
+msg["From"] = new_from
+msg["To"] = new_to
 
-# Get list of current argumetns.
-args=($@)
-
-# $OPTIND starts from 1 and points to next arg.
-# $@ starts from 0 so we need to subtract 2 from $optIndex.
-# If "-f" is found, $optIndex will not be 0.
-if (($optIndex != 0)); then
-    # "-f" is found. Change its value.
-    args[(($optIndex-2))]=$newFrom
-
-    # Set new arguments.
-    set -- "${args[@]}"
-else
-    # "-f" is not found. Add "-f $newFrom" as first argument.
-    new_args=()
-    new_args[0]="-f"
-    new_args[1]=$newFrom
-
-    # Copy old argumetns to new array.
-    for ((i=0; i < ${#args[@]}; i++)) do
-        new_args[(($i+2))]=${args[$i]}
-    done
-
-    # Set new arguments.
-    set -- "${new_args[@]}"
-fi
-
-# Change both "From" and "To" fields in message body.
-newMessage=$(echo "$stdin" | sed -E "0,/$fromRE/s//$fromChangeRE/" | sed -E "0,/$toRE/s//$toChangeRE/")
-
-# Call original sendmail with new parameters and message.
-echo "$newMessage" | /usr/sbin/sendmail-bin $@
-
-# echo for testing
-#echo /usr/sbin/sendmail-bin $@
-#echo
-#echo "$newMessage"
-
+subprocess.run(['/usr/sbin/sendmail-bin', '-f', new_from, '-F', new_from], input=msg.as_string().encode('UTF-8'), check=True)

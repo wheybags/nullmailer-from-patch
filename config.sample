@@ -1,0 +1,2 @@
+FROM=from@example.com
+TO=to@example.com

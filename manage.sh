@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 cd $DIR
@@ -19,12 +19,18 @@ if [ "$1" == "uninstall" ]; then
     echo "successfully uninstalled"
 
 elif [ "$1" == "install" ]; then
+    source ./config || exit 1
+
     if [ "$installed" == "false" ]; then
         mv $sendmail_path $sendmail_path-bin -f || exit 1
         echo moved original sendmail to $sendmail_path-bin
     fi
+    
+    temp_file=`mktemp`
+    cat $patched_path | sed "s/FROM_REPLACE/$FROM/" | sed "s/TO_REPLACE/$TO/" > $temp_file
 
-    cp $patched_path $sendmail_path || exit 1
+    cp $temp_file $sendmail_path || exit 1
+    chmod 755 $sendmail_path || exit 1
     echo installed to $sendmail_path
 else
     echo "usage: $0 [install|uninstall]"
