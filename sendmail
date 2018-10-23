@@ -3,6 +3,7 @@
 
 import sys
 import subprocess
+import socket
 from email.message import EmailMessage
 
 new_from = "FROM_REPLACE"
@@ -14,6 +15,8 @@ subject = "sys mail"
 for line in input_str.splitlines():
     if line.startswith('Subject:'):
         subject = line[len('Subject:'):]
+
+subject = "[" + socket.gethostname() + "] " + subject
 
 msg = EmailMessage()
 msg.set_content(input_str)
